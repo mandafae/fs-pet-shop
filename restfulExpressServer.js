@@ -48,7 +48,7 @@ app.get('/pets/:id', function(req, res) {
 
 
 // Add new pet (POST)
-app.post('/pets', function(req, res) {
+app.post('/pets', function(req, res, next) {
   let newPet = req.body;
   if (!newPet || !newPet.name || !newPet.kind || !/^\d*$/.test(newPet.age)) {
     res.set('Content-Type', 'text/plain').status(400).send('Bad Request');
@@ -56,7 +56,7 @@ app.post('/pets', function(req, res) {
     readFile().then ((info) => {
     info.push(newPet);
     fs.writeFile('pets.json', JSON.stringify(info), function(err) {
-      if (err) throw err;
+      if (err) return next(err);
     })
     res.set('Content-Type', 'application/json').status(200).send(newPet);
   });
@@ -66,7 +66,7 @@ app.post('/pets', function(req, res) {
 
 
 // Update existing pet (PATCH)
-app.patch('/pets/:id', function(req, res) {
+app.patch('/pets/:id', function(req, res, next) {
   let update = req.body;
   let id = parseInt(req.params.id);
   readFile().then((info) => {
@@ -86,7 +86,7 @@ app.patch('/pets/:id', function(req, res) {
       res.set('Content-Type', 'text/plain').status(400).send('Bad Request');
     }
     fs.writeFile('pets.json', JSON.stringify(info), function(err) {
-      if (err) throw err;
+      if (err) return next(err);
     })
     res.set('Content-Type', 'application/json').status(200).send(info[id]);
   });
@@ -95,7 +95,7 @@ app.patch('/pets/:id', function(req, res) {
 
 
 // Delete pet
-app.delete('/pets/:id', function(req, res) {
+app.delete('/pets/:id', function(req, res, next) {
   let id = parseInt(req.params.id);
   readFile().then((info) => {
     if (id < 0 || id >= info.length || isNaN(id)) {
@@ -103,12 +103,17 @@ app.delete('/pets/:id', function(req, res) {
     } else {
       let removed = info.splice(id, 1);
       fs.writeFile('pets.json', JSON.stringify(info), function(err) {
-        if (err) throw err;
+        if (err) return next(err);
       })
       res.set('Content-Type', 'application/json').status(200).send(removed);
     };
   });
   return;
+});
+
+
+app.get('/boom', function(req, res) {
+  res.set('Content-Type', 'text/plain').status(500).send('Internal Server Error');
 });
 
 
